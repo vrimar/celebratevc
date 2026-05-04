@@ -1,0 +1,19 @@
+{
+  "name": "wedding-site",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "export": "next build",
+    "deploy": "next build && touch out/.nojekyll"
+  },
+  "dependencies": {
+    "lucide-react": "^1.14.0",
+    "next": "16.2.4",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "react-select": "^5.10.2"
+  }
+}

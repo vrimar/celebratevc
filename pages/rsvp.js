@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Layout from '../components/Layout';
-import { Check, X } from 'lucide-react';
+import { Check, X, ChevronDown } from 'lucide-react';
 
 const Select = dynamic(() => import('react-select'), { ssr: false });
 
@@ -142,7 +142,17 @@ const MENU = [
 export default function RSVP() {
   const [submitted, setSubmitted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [entreePicker, setEntreePicker] = useState({ open: false, index: null });
   const [allergyOpen, setAllergyOpen] = useState([false, false, false]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 600px)');
+    setIsMobile(mq.matches);
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -304,17 +314,35 @@ export default function RSVP() {
                       )}
                       <div className="form-group">
                         <label className="label" htmlFor={`entree-${i}`}>Entrée Selection</label>
-                        <Select
-                          inputId={`entree-${i}`}
-                          options={ENTREE_OPTIONS}
-                          value={formData.entrees[i]}
-                          onChange={(opt) => handleEntreeChange(i, opt)}
-                          formatOptionLabel={formatOptionLabel}
-                          styles={selectStyles}
-                          placeholder="Select an entrée…"
-                          isSearchable={false}
-                          required
-                        />
+                        {isMobile ? (
+                          <button
+                            type="button"
+                            className={`entree-picker-trigger${formData.entrees[i] ? ' has-value' : ''}`}
+                            onClick={() => setEntreePicker({ open: true, index: i })}
+                          >
+                            <span className="entree-picker-trigger-text">
+                              {formData.entrees[i] ? (
+                                <>
+                                  <span className="entree-picker-trigger-name">{formData.entrees[i].label}</span>
+                                  <span className="entree-picker-trigger-desc">{formData.entrees[i].description}</span>
+                                </>
+                              ) : 'Select an entrée…'}
+                            </span>
+                            <span className="entree-picker-trigger-arrow"><ChevronDown size={16} /></span>
+                          </button>
+                        ) : (
+                          <Select
+                            inputId={`entree-${i}`}
+                            options={ENTREE_OPTIONS}
+                            value={formData.entrees[i]}
+                            onChange={(opt) => handleEntreeChange(i, opt)}
+                            formatOptionLabel={formatOptionLabel}
+                            styles={selectStyles}
+                            placeholder="Select an entrée…"
+                            isSearchable={false}
+                            required
+                          />
+                        )}
                       </div>
                       <div className="form-group" style={{ marginBottom: 0, marginTop: '-1.25rem' }}>
                         {!allergyOpen[i] ? (
@@ -356,6 +384,32 @@ export default function RSVP() {
           </form>
         </div>
       </section>
+
+      {entreePicker.open && (
+        <div className="entree-picker-overlay" onClick={() => setEntreePicker({ open: false, index: null })}>
+          <div className="entree-picker-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="entree-picker-sheet-handle" />
+            <div className="entree-picker-sheet-title">Select an Entrée</div>
+            {ENTREE_OPTIONS.map((opt) => {
+              const selected = formData.entrees[entreePicker.index]?.value === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`entree-picker-option${selected ? ' selected' : ''}`}
+                  onClick={() => {
+                    handleEntreeChange(entreePicker.index, opt);
+                    setEntreePicker({ open: false, index: null });
+                  }}
+                >
+                  <span className="entree-picker-option-name">{opt.label}</span>
+                  <span className="entree-picker-option-desc">{opt.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {menuOpen && (
         <div className="menu-overlay" onClick={() => setMenuOpen(false)}>

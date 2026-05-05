@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Layout from '../components/Layout';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Check, X, ChevronDown } from 'lucide-react';
 
 const Select = dynamic(() => import('react-select'), { ssr: false });
@@ -140,7 +141,10 @@ const MENU = [
 ];
 
 export default function RSVP() {
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [entreePicker, setEntreePicker] = useState({ open: false, index: null });
@@ -186,13 +190,59 @@ export default function RSVP() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    // Static site: store locally. For production, replace with Formspree, Netlify Forms,
-    // Google Forms, or a serverless endpoint.
-    console.log('RSVP submitted:', formData);
-    setSubmitted(true);
-  };
+    setSubmitting(true);
+    setSubmitError(null);
+
+    if (!executeRecaptcha) {
+      setSubmitError('reCAPTCHA not ready — please try again.');
+      setSubmitting(false);
+      return;
+    }
+
+    const recaptchaToken = await executeRecaptcha('submit_rsvp');
+
+    const guestCount = Number(formData.guests);
+    const attending = formData.attendance === 'yes';
+
+    const payload = {
+      recaptchaToken,
+      full_name: formData.name,
+      email: formData.email,
+      attending,
+      guest_count: attending ? guestCount : null,
+      entree_1: attending && formData.entrees[0] ? formData.entrees[0].value : null,
+      entree_2: attending && guestCount >= 2 && formData.entrees[1] ? formData.entrees[1].value : null,
+      entree_3: attending && guestCount >= 3 && formData.entrees[2] ? formData.entrees[2].value : null,
+      allergies_1: attending && formData.allergies[0] ? formData.allergies[0] : null,
+      allergies_2: attending && guestCount >= 2 && formData.allergies[1] ? formData.allergies[1] : null,
+      allergies_3: attending && guestCount >= 3 && formData.allergies[2] ? formData.allergies[2] : null,
+    };
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/submit-rsvp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Unexpected error');
+      }
+      setSubmitted(true);
+    } catch {
+      setSubmitError('Something went wrong — please try again or email us directly.');
+      setSubmitting(false);
+    }
+  }, [executeRecaptcha, formData]);
 
   if (submitted) {
     return (
@@ -378,8 +428,11 @@ export default function RSVP() {
               </>
             )}
 
-            <button type="submit" className="submit-button">
-              Send Response
+            {submitError && (
+              <p className="submit-error">{submitError}</p>
+            )}
+            <button type="submit" className="submit-button" disabled={submitting}>
+              {submitting ? 'Sending…' : 'Send Response'}
             </button>
           </form>
         </div>

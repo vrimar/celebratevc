@@ -1,9 +1,10 @@
 import '../styles/globals.css';
 import Head from 'next/head';
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 export default function App({ Component, pageProps }) {
   return (
-    <>
+    <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}>
       <Head>
         <title>Victoria & Christopher - A Wedding</title>
         <meta name="description" content="Join us for the wedding of Victoria and Christopher" />
@@ -16,6 +17,6 @@ export default function App({ Component, pageProps }) {
         />
       </Head>
       <Component {...pageProps} />
-    </>
+    </GoogleReCaptchaProvider>
   );
 }

@@ -162,24 +162,27 @@ export default function RSVP() {
     email: '',
     attendance: '',
     guests: '1',
-    entrees: [null, null, null],
-    allergies: ['', '', ''],
+    guestDetails: [
+      { name: '', entree: null, allergies: '' },
+      { name: '', entree: null, allergies: '' },
+      { name: '', entree: null, allergies: '' },
+    ],
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const updated = { ...formData, [e.target.name]: e.target.value };
+    if (e.target.name === 'name') {
+      const guestDetails = [...updated.guestDetails];
+      guestDetails[0] = { ...guestDetails[0], name: e.target.value };
+      updated.guestDetails = guestDetails;
+    }
+    setFormData(updated);
   };
 
-  const handleEntreeChange = (index, option) => {
-    const entrees = [...formData.entrees];
-    entrees[index] = option;
-    setFormData({ ...formData, entrees });
-  };
-
-  const handleAllergyChange = (index, value) => {
-    const allergies = [...formData.allergies];
-    allergies[index] = value;
-    setFormData({ ...formData, allergies });
+  const handleGuestDetailChange = (index, field, value) => {
+    const guestDetails = [...formData.guestDetails];
+    guestDetails[index] = { ...guestDetails[index], [field]: value };
+    setFormData({ ...formData, guestDetails });
   };
 
   const toggleAllergy = (index) => {
@@ -212,12 +215,13 @@ export default function RSVP() {
       email: formData.email,
       attending,
       guest_count: attending ? guestCount : null,
-      entree_1: attending && formData.entrees[0] ? formData.entrees[0].value : null,
-      entree_2: attending && guestCount >= 2 && formData.entrees[1] ? formData.entrees[1].value : null,
-      entree_3: attending && guestCount >= 3 && formData.entrees[2] ? formData.entrees[2].value : null,
-      allergies_1: attending && formData.allergies[0] ? formData.allergies[0] : null,
-      allergies_2: attending && guestCount >= 2 && formData.allergies[1] ? formData.allergies[1] : null,
-      allergies_3: attending && guestCount >= 3 && formData.allergies[2] ? formData.allergies[2] : null,
+      guests: attending
+        ? formData.guestDetails.slice(0, guestCount).map((g, i) => ({
+          name: i === 0 ? formData.name : g.name,
+          entree: g.entree ? g.entree.value : null,
+          allergies: g.allergies || null,
+        }))
+        : null,
     };
 
     try {
@@ -360,21 +364,44 @@ export default function RSVP() {
                   {Array.from({ length: Number(formData.guests) }).map((_, i) => (
                     <div key={i} className="guest-entree">
                       {Number(formData.guests) > 1 && (
-                        <div className="guest-entree-heading">Guest {['one', 'two', 'three'][i]}</div>
+                        <>
+                          <div className="guest-entree-heading">Guest {['one', 'two', 'three'][i]}</div>
+                          <div className="form-group">
+                            <label className="label" htmlFor={`guest-name-${i}`}>Full Name</label>
+                            {i === 0 ? (
+                              <input
+                                className="input"
+                                type="text"
+                                id={`guest-name-${i}`}
+                                value={formData.name}
+                                readOnly
+                              />
+                            ) : (
+                              <input
+                                className="input"
+                                type="text"
+                                id={`guest-name-${i}`}
+                                value={formData.guestDetails[i].name}
+                                onChange={(e) => handleGuestDetailChange(i, 'name', e.target.value)}
+                                required
+                              />
+                            )}
+                          </div>
+                        </>
                       )}
                       <div className="form-group">
                         <label className="label" htmlFor={`entree-${i}`}>Entrée Selection</label>
                         {isMobile ? (
                           <button
                             type="button"
-                            className={`entree-picker-trigger${formData.entrees[i] ? ' has-value' : ''}`}
+                            className={`entree-picker-trigger${formData.guestDetails[i].entree ? ' has-value' : ''}`}
                             onClick={() => setEntreePicker({ open: true, index: i })}
                           >
                             <span className="entree-picker-trigger-text">
-                              {formData.entrees[i] ? (
+                              {formData.guestDetails[i].entree ? (
                                 <>
-                                  <span className="entree-picker-trigger-name">{formData.entrees[i].label}</span>
-                                  <span className="entree-picker-trigger-desc">{formData.entrees[i].description}</span>
+                                  <span className="entree-picker-trigger-name">{formData.guestDetails[i].entree.label}</span>
+                                  <span className="entree-picker-trigger-desc">{formData.guestDetails[i].entree.description}</span>
                                 </>
                               ) : 'Select an entrée…'}
                             </span>
@@ -384,8 +411,8 @@ export default function RSVP() {
                           <Select
                             inputId={`entree-${i}`}
                             options={ENTREE_OPTIONS}
-                            value={formData.entrees[i]}
-                            onChange={(opt) => handleEntreeChange(i, opt)}
+                            value={formData.guestDetails[i].entree}
+                            onChange={(opt) => handleGuestDetailChange(i, 'entree', opt)}
                             formatOptionLabel={formatOptionLabel}
                             styles={selectStyles}
                             placeholder="Select an entrée…"
@@ -411,8 +438,8 @@ export default function RSVP() {
                             <textarea
                               className="textarea"
                               id={`allergies-${i}`}
-                              value={formData.allergies[i]}
-                              onChange={(e) => handleAllergyChange(i, e.target.value)}
+                              value={formData.guestDetails[i].allergies}
+                              onChange={(e) => handleGuestDetailChange(i, 'allergies', e.target.value)}
                               rows={2}
                               autoFocus
                             />
@@ -444,14 +471,14 @@ export default function RSVP() {
             <div className="entree-picker-sheet-handle" />
             <div className="entree-picker-sheet-title">Select an Entrée</div>
             {ENTREE_OPTIONS.map((opt) => {
-              const selected = formData.entrees[entreePicker.index]?.value === opt.value;
+              const selected = formData.guestDetails[entreePicker.index]?.entree?.value === opt.value;
               return (
                 <button
                   key={opt.value}
                   type="button"
                   className={`entree-picker-option${selected ? ' selected' : ''}`}
                   onClick={() => {
-                    handleEntreeChange(entreePicker.index, opt);
+                    handleGuestDetailChange(entreePicker.index, 'entree', opt);
                     setEntreePicker({ open: false, index: null });
                   }}
                 >

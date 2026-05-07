@@ -29,12 +29,7 @@ serve(async (req) => {
     email: string;
     attending: boolean;
     guest_count: number | null;
-    entree_1: string | null;
-    entree_2: string | null;
-    entree_3: string | null;
-    allergies_1: string | null;
-    allergies_2: string | null;
-    allergies_3: string | null;
+    guests: { name: string; entree: string | null; allergies: string | null }[] | null;
   };
 
   try {

@@ -17,10 +17,5 @@
     "react-dom": "19.2.5",
     "react-google-recaptcha-v3": "^1.11.0",
     "react-select": "^5.10.2"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp"
-    ]
   }
 }

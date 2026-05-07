@@ -266,7 +266,7 @@ export default function RSVP() {
         <div className="container">
           <div className="page-header">
             <div className="page-eyebrow">Kindly Respond</div>
-            <h1 className="page-title">By July 1, 2026</h1>
+            <h1 className="page-title">By July 16, 2026</h1>
             <div className="rsvp-divider"></div>
             <p className="page-subtitle">
               Please let us know if you'll be joining us to celebrate.

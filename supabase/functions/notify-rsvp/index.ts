@@ -27,17 +27,19 @@ serve(async (req) => {
   const attending = row.attending as boolean;
   const guestCount = (row.guest_count as number | null) ?? 1;
 
-  const entrees = [row.entree_1, row.entree_2, row.entree_3] as (string | null)[];
-  const allergies = [row.allergies_1, row.allergies_2, row.allergies_3] as (string | null)[];
+  const guests = (row.guests as { name: string; entree: string | null; allergies: string | null }[] | null) ?? [];
 
   const guestRows = attending
     ? Array.from({ length: guestCount }, (_, i) => {
-        const entree = entrees[i] ? ENTREE_LABELS[entrees[i]!] ?? entrees[i] : '—';
-        const allergy = allergies[i] || null;
+        const guest = guests[i];
+        const entreeKey = guest?.entree ?? null;
+        const entree = entreeKey ? ENTREE_LABELS[entreeKey] ?? entreeKey : '—';
+        const allergy = guest?.allergies || null;
+        const guestName = guest?.name || (i === 0 ? (row.full_name as string) : `Guest ${i + 1}`);
         return `
           <tr>
             <td style="padding:8px 12px;border-bottom:1px solid #e8ddd3;color:#5a4a3a;">
-              ${guestCount > 1 ? `Guest ${i + 1}` : row.full_name}
+              ${guestName}
             </td>
             <td style="padding:8px 12px;border-bottom:1px solid #e8ddd3;color:#5a4a3a;">${entree}</td>
             <td style="padding:8px 12px;border-bottom:1px solid #e8ddd3;color:#5a4a3a;">${allergy ?? '—'}</td>

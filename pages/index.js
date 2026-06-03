@@ -1,4 +1,4 @@
-import Layout from '../components/Layout';
+import Layout from "../components/Layout";
 
 export default function Home() {
   return (
@@ -28,7 +28,9 @@ export default function Home() {
           <div className="detail-label">Reception</div>
           <div className="detail-value">Napoli Ristorante</div>
           <div className="detail-sub">5458 Ferry Street, Niagara Falls, ON</div>
-          <div className="detail-sub">Cocktails at 4:00 PM | Dinner at 5:30 PM</div>
+          <div className="detail-sub">
+            Cocktail Hour at 4:00 PM | Dinner at 5:30 PM
+          </div>
         </div>
       </section>
     </Layout>

@@ -170,13 +170,7 @@ export default function RSVP() {
   });
 
   const handleChange = (e) => {
-    const updated = { ...formData, [e.target.name]: e.target.value };
-    if (e.target.name === 'name') {
-      const guestDetails = [...updated.guestDetails];
-      guestDetails[0] = { ...guestDetails[0], name: e.target.value };
-      updated.guestDetails = guestDetails;
-    }
-    setFormData(updated);
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleGuestDetailChange = (index, field, value) => {
@@ -279,32 +273,6 @@ export default function RSVP() {
 
           <form className="form" onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="label" htmlFor="name">Full Name</label>
-              <input
-                className="input"
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="label" htmlFor="email">Email Address</label>
-              <input
-                className="input"
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
               <label className="label">Will You Attend?</label>
               <div className="radio-group">
                 <div className="radio-option">
@@ -332,6 +300,36 @@ export default function RSVP() {
                 </div>
               </div>
             </div>
+
+            {formData.attendance && (
+              <div className="form-group">
+                <label className="label" htmlFor="email">Email Address</label>
+                <input
+                  className="input"
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            )}
+
+            {formData.attendance === 'no' && (
+              <div className="form-group">
+                <label className="label" htmlFor="name">Full Name</label>
+                <input
+                  className="input"
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            )}
 
             {formData.attendance === 'yes' && (
               <>
@@ -364,31 +362,31 @@ export default function RSVP() {
                   {Array.from({ length: Number(formData.guests) }).map((_, i) => (
                     <div key={i} className="guest-entree">
                       {Number(formData.guests) > 1 && (
-                        <>
-                          <div className="guest-entree-heading">Guest {['one', 'two', 'three'][i]}</div>
-                          <div className="form-group">
-                            <label className="label" htmlFor={`guest-name-${i}`}>Full Name</label>
-                            {i === 0 ? (
-                              <input
-                                className="input"
-                                type="text"
-                                id={`guest-name-${i}`}
-                                value={formData.name}
-                                readOnly
-                              />
-                            ) : (
-                              <input
-                                className="input"
-                                type="text"
-                                id={`guest-name-${i}`}
-                                value={formData.guestDetails[i].name}
-                                onChange={(e) => handleGuestDetailChange(i, 'name', e.target.value)}
-                                required
-                              />
-                            )}
-                          </div>
-                        </>
+                        <div className="guest-entree-heading">Guest {['one', 'two', 'three'][i]}</div>
                       )}
+                      <div className="form-group">
+                        <label className="label" htmlFor={`guest-name-${i}`}>Full Name</label>
+                        {i === 0 ? (
+                          <input
+                            className="input"
+                            type="text"
+                            id={`guest-name-${i}`}
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            required
+                          />
+                        ) : (
+                          <input
+                            className="input"
+                            type="text"
+                            id={`guest-name-${i}`}
+                            value={formData.guestDetails[i].name}
+                            onChange={(e) => handleGuestDetailChange(i, 'name', e.target.value)}
+                            required
+                          />
+                        )}
+                      </div>
                       <div className="form-group">
                         <label className="label" htmlFor={`entree-${i}`}>Entrée Selection</label>
                         {isMobile ? (
